@@ -10,11 +10,11 @@ HIGH-LEVEL FLOW
    session.list in small windows (newest first). Windows are kept small because
    the API returns at most 1000 records per call; a warning is printed if a
    window hits that cap.
-4. Keep one session per client MAC (most recent) and write them to a CSV.
+4. Keep one session per client MAC (most recent).
 5. For each session: call session.details.get (by authReqID) to read the
    Certificate:SAN, NAS-IP-Address and NAS-Port-Id attributes, then call
    config.nad.get (by the apMAC switch MAC) to get the switch name.
-6. Write a second CSV: sessionID, switchName, switchIP, switchIntf, hostname.
+6. Write a CSV (the only file saved): sessionID, switchName, switchIP, switchIntf, hostname.
 
 Required environment: whatever AgniConfig.from_env() expects (API credentials,
 org ID, etc. - see agni_client/config.py).
@@ -24,7 +24,6 @@ org ID, etc. - see agni_client/config.py).
 import csv  # writing the CSV report
 import sys  # stderr output and exit codes
 import time  # sleep between API calls (simple rate-limit courtesy)
-from dataclasses import asdict  # converts a SessionRecord dataclass -> dict
 from datetime import datetime, timedelta, timezone  # time-window math
 from pathlib import Path  # filesystem path handling for the CSV
 from typing import Dict, List, Optional, Set  # type hints only
@@ -61,7 +60,6 @@ STATUS = "failed"
 # Error codes the user can pick from at the prompt. Add more here later.
 ERROR_CODES = ["peer_certificate_expired"]
 # Prefix for the output CSV file names.
-SESSIONS_CSV_PREFIX = "agni_failed_sessions"
 SWITCH_MAP_CSV_PREFIX = "agni_failed_session_switches"
 # Header of the switch/host mapping CSV.
 SWITCH_MAP_FIELDS = ["sessionID", "switchName", "switchIP", "switchIntf", "hostname"]
@@ -178,34 +176,6 @@ def deduplicate_by_mac(records: List[SessionRecord]) -> List[SessionRecord]:
     return deduped
 
 
-def write_csv(records: List[SessionRecord], *, prefix: str) -> Path:
-    """Write the records to a timestamped CSV and return its path.
-
-    `prefix` is keyword-only (note the `*`) to keep call sites explicit.
-    """
-    # Local-time timestamp makes each run's file name unique, so earlier
-    # output is never overwritten.
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    # Relative path -> file lands in the directory the script is run from.
-    csv_path = Path(f"{prefix}_{timestamp}.csv")
-
-    # Convert each dataclass instance into a plain dict (column -> value).
-    record_dicts = [asdict(rec) for rec in records]
-    # Build the header from the UNION of keys across all records (in case some
-    # records have fields others lack), sorted alphabetically for stable columns.
-    # DictWriter fills missing values with empty strings.
-    fieldnames = sorted({key for rec in record_dicts for key in rec.keys()})
-
-    # newline="" is required by the csv module to avoid blank lines on Windows;
-    # utf-8 keeps non-ASCII characters intact.
-    with csv_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        writer.writeheader()  # first row: column names
-        writer.writerows(record_dicts)  # one row per session
-
-    return csv_path
-
-
 def build_switch_rows(
     records: List[SessionRecord],
     details_api: SessionDetailsAPI,
@@ -309,14 +279,6 @@ def main() -> None:
         # Reduce to one record per MAC (most recent session wins).
         deduped_records = deduplicate_by_mac(records)
         print(f"Deduplicated from {len(records)} down to {len(deduped_records)} records based on MAC address.")
-
-        # Save the de-duplicated session list.
-        try:
-            csv_path = write_csv(deduped_records, prefix=SESSIONS_CSV_PREFIX)
-        except OSError as exc:
-            print(f"Failed to write CSV: {exc}", file=sys.stderr)
-            sys.exit(1)
-        print(f"Wrote {len(deduped_records)} records to {csv_path}")
 
         # Step 2: enrich each session with switch/host details.
         print(f"\nLooking up session details and switch names for {len(deduped_records)} sessions")

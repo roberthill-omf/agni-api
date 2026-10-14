@@ -104,20 +104,17 @@ If you see this, re-run with a smaller window (for example `2` or `1` minutes). 
 
 1. Calls `session.list` for each window with `status = failed` and a filter on the chosen error code.
 2. **Deduplicates by client MAC**, keeping the most recent session for each device.
-3. Writes the deduplicated sessions to `agni_failed_sessions_<YYYYMMDD_HHMMSS>.csv` (all session fields).
-4. For each remaining session:
+3. For each remaining session:
    - Calls `session.details.get` with the session's `authReqID` and your org ID, and reads:
      - `Radius:IETF:NAS-IP-Address` (switch IP)
      - `Radius:IETF:NAS-Port-Id` (switch interface)
      - `Certificate:SAN` (host name on the certificate)
    - Calls `config.nad.get` with the switch MAC (the session's `apMAC`) and your org ID to get the switch **name**. Names are cached per switch MAC, so each switch is looked up only once.
-5. Writes `agni_failed_session_switches_<YYYYMMDD_HHMMSS>.csv`.
+4. Writes `agni_failed_session_switches_<YYYYMMDD_HHMMSS>.csv`. This is the only file saved; the raw session list is not written to disk.
 
-### Output files
+### Output file
 
-Both files are written to the current directory.
-
-**`agni_failed_sessions_<timestamp>.csv`**: one row per unique client MAC, with every field returned by `session.list` (`authReqID`, `mac`, `apMAC`, `error`, `createdAt`, `nadName`, and so on).
+Written to the current directory.
 
 **`agni_failed_session_switches_<timestamp>.csv`**:
 
