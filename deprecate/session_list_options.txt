@@ -1,0 +1,15 @@
+# Uncomment and set any of these options to use them in the request.
+# cursor=string
+# filters=[{"field":"identity","value":"alice"}]
+# fromTimestamp=2025-12-2T00:00:01.000Z
+# toTimestamp=2025-11-28T17:23:45.415Z
+# limit=100
+# location=HQ
+# onPremNodeID=node-1
+# orgID=override-org
+# query=search text
+# sessionType=wireless
+# status=failed
+# zoneID=1
+# windowMinutes=30
+# lookbackHours=6
