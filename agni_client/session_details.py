@@ -24,6 +24,14 @@ class SessionDetails:
         return san if isinstance(san, list) else [san]
 
     @property
+    def radius_ietf_username(self) -> str:
+        """Radius:IETF:User-Name is a single key:value pair in the API; always return a string."""
+        hostname = self.inputAttrs.get("Radius:IETF:User-Name")
+        if hostname is None:
+            return ""
+        return hostname
+
+    @property
     def nas_ip(self) -> Optional[str]:
         return self.inputAttrs.get("Radius:IETF:NAS-IP-Address")
 

@@ -222,7 +222,7 @@ def build_switch_rows(
                 "switchIP": details.nas_ip or "",
                 # A certificate can carry several SANs; join them with ";".
                 "switchIntf": details.nas_port_id or "",
-                "hostname": ";".join(details.certificate_san),
+                "hostname": details.radius_ietf_username,
             }
         )
 
