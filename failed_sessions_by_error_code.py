@@ -71,7 +71,7 @@ ERROR_CODES = [
     "bad_eap_packet"
     ]
 # Prefix for the output CSV file names.
-SWITCH_MAP_CSV_PREFIX = "agni_failed_session_switches"
+SWITCH_MAP_CSV_PREFIX = "failed_sessions_"
 # Header of the switch/host mapping CSV.
 SWITCH_MAP_FIELDS = ["sessionID", "switchName", "switchIP", "switchIntf", "hostname"]
 
@@ -301,7 +301,7 @@ def main() -> None:
         client.close()
 
     try:
-        switch_csv_path = write_switch_csv(rows, prefix=SWITCH_MAP_CSV_PREFIX)
+        switch_csv_path = write_switch_csv(rows, prefix=SWITCH_MAP_CSV_PREFIX+error_code)
     except OSError as exc:
         print(f"Failed to write CSV: {exc}", file=sys.stderr)
         sys.exit(1)
