@@ -58,9 +58,20 @@ API_RECORD_LIMIT = 1000
 # Session status to request from the API; only failed (rejected) sessions.
 STATUS = "failed"
 # Error codes the user can pick from at the prompt. Add more here later.
-ERROR_CODES = ["peer_certificate_expired"]
+ERROR_CODES = [
+    "peer_certificate_expired",
+    "client_group_not_associated_to_user",
+    "radius_recv_timeout",
+    "eap_desired_auth_type_not_allowed",
+    "eap_unexpected_message",
+    "peer_cert_not_found",
+    "tls_handshake_failed",
+    "resp_identifier_do_not_match",
+    "handshake_tls_conn_read_failed",
+    "bad_eap_packet"
+    ]
 # Prefix for the output CSV file names.
-SWITCH_MAP_CSV_PREFIX = "agni_failed_session_switches"
+SWITCH_MAP_CSV_PREFIX = "failed_sessions_"
 # Header of the switch/host mapping CSV.
 SWITCH_MAP_FIELDS = ["sessionID", "switchName", "switchIP", "switchIntf", "hostname"]
 
@@ -290,7 +301,7 @@ def main() -> None:
         client.close()
 
     try:
-        switch_csv_path = write_switch_csv(rows, prefix=SWITCH_MAP_CSV_PREFIX)
+        switch_csv_path = write_switch_csv(rows, prefix=SWITCH_MAP_CSV_PREFIX+error_code)
     except OSError as exc:
         print(f"Failed to write CSV: {exc}", file=sys.stderr)
         sys.exit(1)
